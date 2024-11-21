@@ -161,6 +161,7 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                     const ctx = canvas.getContext('2d');
                     let currentFilter = 'all';
                     let allTabs = [];
+                    let availableBrowsers = new Set(['all']);
                     
                     function detectBrowser(tab) {
                         if (tab.url.includes('chrome-extension://')) return 'Chrome';
@@ -168,26 +169,40 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         return 'Unknown';
                     }
 
-                    function updateBrowserFilters(tabs) {
-                        const browsers = new Set(['all']);
-                        tabs.forEach(tab => browsers.add(detectBrowser(tab)));
-                        
+                    function updateBrowserFilters(browsers) {
                         const filtersContainer = document.getElementById('browserFilters');
                         filtersContainer.innerHTML = '';
                         
+                        // Add 'All Browsers' filter
+                        const allButton = document.createElement('button');
+                        allButton.className = `browser-filter ${currentFilter === 'all' ? 'active' : ''}`;
+                        allButton.textContent = 'All Browsers';
+                        allButton.dataset.browser = 'all';
+                        allButton.onclick = () => {
+                            currentFilter = 'all';
+                            document.querySelectorAll('.browser-filter').forEach(btn => 
+                                btn.classList.toggle('active', btn.dataset.browser === 'all')
+                            );
+                            updateTabList(allTabs);
+                        };
+                        filtersContainer.appendChild(allButton);
+                        
+                        // Add browser-specific filters
                         browsers.forEach(browser => {
-                            const button = document.createElement('button');
-                            button.className = `browser-filter ${currentFilter === browser ? 'active' : ''}`;
-                            button.textContent = browser === 'all' ? 'All Browsers' : browser;
-                            button.dataset.browser = browser;
-                            button.onclick = () => {
-                                currentFilter = browser;
-                                document.querySelectorAll('.browser-filter').forEach(btn => 
-                                    btn.classList.toggle('active', btn.dataset.browser === browser)
-                                );
-                                updateTabList(allTabs);
-                            };
-                            filtersContainer.appendChild(button);
+                            if (browser !== 'all') {
+                                const button = document.createElement('button');
+                                button.className = `browser-filter ${currentFilter === browser ? 'active' : ''}`;
+                                button.textContent = browser;
+                                button.dataset.browser = browser;
+                                button.onclick = () => {
+                                    currentFilter = browser;
+                                    document.querySelectorAll('.browser-filter').forEach(btn => 
+                                        btn.classList.toggle('active', btn.dataset.browser === browser)
+                                    );
+                                    updateTabList(allTabs);
+                                };
+                                filtersContainer.appendChild(button);
+                            }
                         });
                     }
 
@@ -244,12 +259,10 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         allTabs = tabs;
                         const filteredTabs = currentFilter === 'all' 
                             ? tabs 
-                            : tabs.filter(tab => detectBrowser(tab) === currentFilter);
+                            : tabs.filter(tab => tab.browser === currentFilter);
                         
                         const tabList = document.getElementById('tabList');
                         tabList.innerHTML = '';
-                        
-                        updateBrowserFilters(tabs);
                         
                         filteredTabs.forEach(tab => {
                             const tabElement = document.createElement('div');
@@ -262,7 +275,6 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                                 }));
                             };
                             
-                            const browser = detectBrowser(tab);
                             const isWhite = whiteIcons.get(tab.id);
                             
                             tabElement.innerHTML = `
@@ -270,7 +282,7 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                                      class="favicon ${isWhite ? 'recolor-black' : ''}" 
                                      onerror="this.src='/static/fallback.svg'">
                                 <span class="tab-title">${tab.title}</span>
-                                <span class="browser-label">${browser}</span>
+                                <span class="browser-label">${tab.browser}</span>
                             `;
                             
                             tabList.appendChild(tabElement);
@@ -290,6 +302,7 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                     ws.onmessage = function(event) {
                         const data = JSON.parse(event.data);
                         if (data.type === 'tabs_update') {
+                            updateBrowserFilters(data.browsers || ['all']);
                             updateTabList(data.tabs);
                         }
                     };

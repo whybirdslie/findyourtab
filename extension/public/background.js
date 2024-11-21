@@ -37,22 +37,33 @@ function connectWebSocket() {
   };
 }
 
+async function detectCurrentBrowser() {
+  // Get the extension's own URL to determine the browser
+  const extensionInfo = chrome.runtime.getURL('');
+  return extensionInfo.includes('chrome-extension://') ? 'Chrome' : 'Brave';
+}
+
 async function sendCurrentTabs() {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
   try {
     const tabs = await chrome.tabs.query({});
-    const formattedTabs = tabs.map(tab => ({
-      id: tab.id,
-      title: tab.title,
-      url: tab.url,
-      favIconUrl: tab.favIconUrl,
-      windowId: tab.windowId
-    }));
+    const currentBrowser = await detectCurrentBrowser();
+    
+    const formattedTabs = tabs
+      .map(tab => ({
+        id: tab.id,
+        title: tab.title,
+        url: tab.url,
+        favIconUrl: tab.favIconUrl,
+        windowId: tab.windowId,
+        browser: currentBrowser
+      }));
 
     ws.send(JSON.stringify({
       type: 'tabs_update',
-      tabs: formattedTabs
+      tabs: formattedTabs,
+      browser: currentBrowser
     }));
   } catch (error) {
     console.error('Error sending tabs:', error);

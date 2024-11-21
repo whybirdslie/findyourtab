@@ -154,9 +154,14 @@ h1 {
 
 .header-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
 }
 
 .connection-button {
@@ -186,7 +191,8 @@ h1 {
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 4px;
-  margin-left: 10px;
+  position: relative;
+  top: 1px;
 }
 
 .connection-status.connected {
@@ -197,10 +203,4 @@ h1 {
 .connection-status.offline {
   color: #666;
   background-color: #f0f0f0;
-}
-
-.header-container {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
 }
