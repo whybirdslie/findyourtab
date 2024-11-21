@@ -1,0 +1,4 @@
+keyboard==0.13.5
+pywebview==4.4.1
+psutil==5.9.8
+websockets==12.0

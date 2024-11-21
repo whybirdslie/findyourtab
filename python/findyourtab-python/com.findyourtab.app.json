@@ -1,0 +1,9 @@
+{
+  "name": "com.findyourtab.app",
+  "description": "Native host for FindYourTab",
+  "path": "C:\\Users\\jeffr\\findyourtab\\findyourtab-python\\run_native_host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://angnkfbndjfmaefdkninijdjocladebk/"
+  ]
+} 

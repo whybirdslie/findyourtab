@@ -1,0 +1,3 @@
+[submodule "findyourtab-extension"]
+	path = findyourtab-extension
+	url = https://github.com/whybirdslie/findyourtab-extension
