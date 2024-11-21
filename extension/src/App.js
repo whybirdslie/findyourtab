@@ -11,16 +11,33 @@ function App() {
   const canvasRef = useRef(document.createElement('canvas'));
   const wsRef = useRef(null);
 
+  const detectBrowser = (url) => {
+    if (url.includes('chrome-extension://')) return 'Chrome';
+    if (url.includes('brave-extension://')) return 'Brave';
+    return window.navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Brave';
+  };
+
+  const getCurrentBrowser = () => {
+    // Detect current browser based on the extension URL
+    const currentUrl = window.location.href;
+    return detectBrowser(currentUrl);
+  };
+
   const fetchTabsDirectly = async () => {
     try {
       const chromeTabs = await chrome.tabs.query({});
-      const formattedTabs = chromeTabs.map(tab => ({
-        id: tab.id,
-        title: tab.title,
-        url: tab.url,
-        favIconUrl: tab.favIconUrl,
-        windowId: tab.windowId
-      }));
+      const currentBrowser = getCurrentBrowser();
+      
+      const formattedTabs = chromeTabs
+        .map(tab => ({
+          id: tab.id,
+          title: tab.title,
+          url: tab.url,
+          favIconUrl: tab.favIconUrl,
+          windowId: tab.windowId,
+          browser: currentBrowser
+        }));
+      
       setTabs(formattedTabs);
     } catch (error) {
       console.error('Error fetching tabs directly:', error);
@@ -49,6 +66,17 @@ function App() {
     }
   };
 
+  const handleWebSocketMessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'tabs_update') {
+      const currentBrowser = getCurrentBrowser();
+      // Only update tabs if they're from the same browser
+      if (data.browser === currentBrowser) {
+        setTabs(data.tabs);
+      }
+    }
+  };
+
   const connectWebSocket = () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
@@ -60,24 +88,17 @@ function App() {
       setWsConnected(true);
     };
 
-    wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'tabs_update') {
-        setTabs(data.tabs);
-      }
-    };
+    wsRef.current.onmessage = handleWebSocketMessage;
 
     wsRef.current.onerror = (error) => {
       console.error('WebSocket error in popup:', error);
       setWsConnected(false);
-      // Fallback to direct tab fetching
       fetchTabsDirectly();
     };
 
     wsRef.current.onclose = () => {
       console.log('WebSocket connection closed in popup');
       setWsConnected(false);
-      // Fallback to direct tab fetching
       fetchTabsDirectly();
       setTimeout(connectWebSocket, 1000);
     };
@@ -172,12 +193,12 @@ function App() {
   return (
     <div className="App">
       <div className="header-container">
-        <h1>Current Tabs</h1>
-        {!wsConnected && (
-          <div className="connection-status">
-            Offline Mode
+        <div className="header-left">
+          <h1>Current Tabs</h1>
+          <div className={`connection-status ${wsConnected ? 'connected' : 'offline'}`}>
+            {wsConnected ? 'Connected' : 'Offline Mode'}
           </div>
-        )}
+        </div>
       </div>
       <div className="tab-grid">
         {tabs.map((tab) => (
