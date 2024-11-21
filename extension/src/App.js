@@ -70,14 +70,12 @@ function App() {
     wsRef.current.onerror = (error) => {
       console.error('WebSocket error in popup:', error);
       setWsConnected(false);
-      // Fallback to direct tab fetching
       fetchTabsDirectly();
     };
 
     wsRef.current.onclose = () => {
       console.log('WebSocket connection closed in popup');
       setWsConnected(false);
-      // Fallback to direct tab fetching
       fetchTabsDirectly();
       setTimeout(connectWebSocket, 1000);
     };
@@ -172,12 +170,12 @@ function App() {
   return (
     <div className="App">
       <div className="header-container">
-        <h1>Current Tabs</h1>
-        {!wsConnected && (
-          <div className="connection-status">
-            Offline Mode
+        <div className="header-left">
+          <h1>Current Tabs</h1>
+          <div className={`connection-status ${wsConnected ? 'connected' : 'offline'}`}>
+            {wsConnected ? 'Connected' : 'Offline Mode'}
           </div>
-        )}
+        </div>
       </div>
       <div className="tab-grid">
         {tabs.map((tab) => (

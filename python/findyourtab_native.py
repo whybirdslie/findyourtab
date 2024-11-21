@@ -31,20 +31,29 @@ class TabFinder:
                 self.window = webview.create_window(
                     'FindYourTab',
                     'http://localhost:8000/popup.html',
-                    width=600,
-                    height=400,
+                    width=800,
+                    height=600,
                     resizable=True,
-                    frameless=True,
-                    transparent=True,
-                    on_top=True
+                    frameless=False,
+                    transparent=False,
+                    on_top=True,
+                    min_size=(400, 300)
                 )
-                self.is_visible = True
+                if self.window:
+                    print("Window created successfully", file=sys.stderr)
+                    self.is_visible = True
+                    return True
+                else:
+                    print("Failed to create window", file=sys.stderr)
+                    return False
             else:
                 print("Showing existing window", file=sys.stderr)
                 self.window.show()
                 self.is_visible = True
+                return True
         except Exception as e:
             print(f"Error showing window: {e}", file=sys.stderr)
+            return False
 
     def hide_window(self):
         if self.window:
@@ -73,12 +82,14 @@ def main():
     print("Registering hotkey...", file=sys.stderr)
     keyboard.add_hotkey('ctrl+alt+f', tab_finder.toggle_window)
 
-    # Create initial window (hidden)
-    tab_finder.show_window()
-
-    # Start webview
-    print("Starting webview...", file=sys.stderr)
-    webview.start(debug=True)
+    # Create initial window (hidden) and ensure it's created before starting
+    if tab_finder.show_window():
+        # Start webview only if window creation was successful
+        print("Starting webview...", file=sys.stderr)
+        webview.start(debug=True)
+    else:
+        print("Failed to create window, exiting...", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     try:

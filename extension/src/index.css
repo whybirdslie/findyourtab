@@ -184,8 +184,23 @@ h1 {
 
 .connection-status {
   font-size: 12px;
-  color: #666;
   padding: 4px 8px;
   border-radius: 4px;
+  margin-left: 10px;
+}
+
+.connection-status.connected {
+  color: #4CAF50;
+  background-color: #E8F5E9;
+}
+
+.connection-status.offline {
+  color: #666;
   background-color: #f0f0f0;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
 }
