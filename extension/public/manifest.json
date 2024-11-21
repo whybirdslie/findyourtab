@@ -1,16 +1,22 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "FindYourTab",
   "version": "1.0",
   "description": "Quickly find and switch between browser tabs",
-  "permissions": ["tabs"],
-  "browser_action": {
+  "permissions": [
+    "tabs",
+    "scripting"
+  ],
+  "action": {
     "default_popup": "index.html",
-    "default_title": "FindYourTab",
-    "default_width": 600
+    "default_title": "FindYourTab"
   },
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
-  }
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "host_permissions": [
+    "<all_urls>",
+    "ws://localhost:*/"
+  ]
 }

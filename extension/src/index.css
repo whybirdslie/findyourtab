@@ -5,9 +5,14 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f0f0; /* Light gray background */
+  background-color: #f0f0f0;
+  /* Light gray background */
   width: 100%;
-  min-width: 600px; /* Ensure minimum width */
+  min-width: 600px;
+  /* Ensure minimum width */
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .container {
@@ -49,6 +54,7 @@ button {
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
+  padding: 20px;
 }
 
 .App-logo {
@@ -81,6 +87,7 @@ button {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -99,7 +106,7 @@ button {
   background-color: white;
   padding: 8px;
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -143,4 +150,42 @@ h1 {
 
 .favicon.recolor-black {
   filter: brightness(0) saturate(100%);
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.connection-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.connection-button:not(.connected) {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.connection-button.connected {
+  background-color: #f44336;
+  color: white;
+}
+
+.connection-button:hover {
+  opacity: 0.9;
+}
+
+.connection-status {
+  font-size: 12px;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f0f0f0;
 }
