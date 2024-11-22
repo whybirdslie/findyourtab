@@ -3,6 +3,7 @@ console.log('Background script loaded');
 let ws = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
+let updateTimeout = null;
 
 function connectWebSocket() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
@@ -38,9 +39,40 @@ function connectWebSocket() {
 }
 
 async function detectCurrentBrowser() {
-  // Get the extension's own URL to determine the browser
-  const extensionInfo = chrome.runtime.getURL('');
-  return extensionInfo.includes('chrome-extension://') ? 'Chrome' : 'Brave';
+  try {
+    const extensionUrl = chrome.runtime.getURL('');
+    console.log('Extension URL:', extensionUrl);
+
+    // Check for Edge
+    if (navigator.userAgent.includes('Edg/')) {
+      return 'Edge';
+    }
+
+    // Primary Brave detection using native API
+    if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+      const isBrave = await navigator.brave.isBrave();
+      if (isBrave) {
+        return 'Brave';
+      }
+    }
+
+    // Extension URL based detection
+    if (extensionUrl.includes('chrome-extension://')) {
+      return 'Chrome';
+    } else if (extensionUrl.includes('brave-extension://')) {
+      return 'Brave';
+    }
+
+    console.log('Browser detection details:', {
+      extensionUrl,
+      userAgent: navigator.userAgent
+    });
+
+    return 'Unknown';
+  } catch (error) {
+    console.error('Error in browser detection:', error);
+    return 'Unknown';
+  }
 }
 
 async function sendCurrentTabs() {
@@ -49,16 +81,16 @@ async function sendCurrentTabs() {
   try {
     const tabs = await chrome.tabs.query({});
     const currentBrowser = await detectCurrentBrowser();
+    console.log('Detected browser:', currentBrowser); // Debug log
     
-    const formattedTabs = tabs
-      .map(tab => ({
-        id: tab.id,
-        title: tab.title,
-        url: tab.url,
-        favIconUrl: tab.favIconUrl,
-        windowId: tab.windowId,
-        browser: currentBrowser
-      }));
+    const formattedTabs = tabs.map(tab => ({
+      id: tab.id,
+      title: tab.title,
+      url: tab.url,
+      favIconUrl: tab.favIconUrl,
+      windowId: tab.windowId,
+      browser: currentBrowser
+    }));
 
     ws.send(JSON.stringify({
       type: 'tabs_update',
@@ -70,14 +102,21 @@ async function sendCurrentTabs() {
   }
 }
 
+function debouncedSendTabs() {
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
+  updateTimeout = setTimeout(sendCurrentTabs, 1000);
+}
+
 // Connect to WebSocket server
 connectWebSocket();
 
-// Update tabs periodically
-setInterval(sendCurrentTabs, 5000);
+// Update tabs every 10 seconds
+setInterval(debouncedSendTabs, 10000);
 
 // Listen for tab changes
-chrome.tabs.onCreated.addListener(sendCurrentTabs);
-chrome.tabs.onRemoved.addListener(sendCurrentTabs);
-chrome.tabs.onUpdated.addListener(sendCurrentTabs);
-chrome.tabs.onMoved.addListener(sendCurrentTabs);
+chrome.tabs.onCreated.addListener(debouncedSendTabs);
+chrome.tabs.onRemoved.addListener(debouncedSendTabs);
+chrome.tabs.onUpdated.addListener(debouncedSendTabs);
+chrome.tabs.onMoved.addListener(debouncedSendTabs);

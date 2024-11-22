@@ -137,6 +137,16 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         background: #f0f0f0;
                         margin-left: 8px;
                     }
+                    .browser-section {
+                        margin-bottom: 20px;
+                    }
+                    .browser-header {
+                        font-size: 16px;
+                        color: #666;
+                        margin: 10px 0;
+                        padding-bottom: 5px;
+                        border-bottom: 1px solid #eee;
+                    }
                 </style>
             </head>
             <body>
@@ -257,41 +267,116 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
 
                     function updateTabList(tabs) {
                         allTabs = tabs;
-                        const filteredTabs = currentFilter === 'all' 
-                            ? tabs 
-                            : tabs.filter(tab => tab.browser === currentFilter);
+                        let filteredTabs;
+                        
+                        if (currentFilter === 'all') {
+                            // For 'all' view, combine all tabs and sort by browser and title
+                            filteredTabs = tabs.sort((a, b) => {
+                                // First sort by browser
+                                const browserCompare = a.browser.localeCompare(b.browser);
+                                if (browserCompare !== 0) return browserCompare;
+                                // Then by title within each browser
+                                return a.title.localeCompare(b.title);
+                            });
+                        } else {
+                            // For specific browser view, filter and sort by title
+                            filteredTabs = tabs
+                                .filter(tab => tab.browser === currentFilter)
+                                .sort((a, b) => a.title.localeCompare(b.title));
+                        }
                         
                         const tabList = document.getElementById('tabList');
                         tabList.innerHTML = '';
                         
-                        filteredTabs.forEach(tab => {
-                            const tabElement = document.createElement('div');
-                            tabElement.className = 'tab-item';
-                            tabElement.onclick = () => {
-                                ws.send(JSON.stringify({
-                                    type: 'activate_tab',
-                                    tabId: tab.id,
-                                    windowId: tab.windowId
-                                }));
-                            };
+                        if (currentFilter === 'all') {
+                            // Group tabs by browser
+                            const browserGroups = {};
+                            filteredTabs.forEach(tab => {
+                                if (!browserGroups[tab.browser]) {
+                                    browserGroups[tab.browser] = [];
+                                }
+                                browserGroups[tab.browser].push(tab);
+                            });
                             
-                            const isWhite = whiteIcons.get(tab.id);
-                            
-                            tabElement.innerHTML = `
-                                <img src="${tab.favIconUrl || '/static/fallback.svg'}" 
-                                     class="favicon ${isWhite ? 'recolor-black' : ''}" 
-                                     onerror="this.src='/static/fallback.svg'">
-                                <span class="tab-title">${tab.title}</span>
-                                <span class="browser-label">${tab.browser}</span>
-                            `;
-                            
-                            tabList.appendChild(tabElement);
-                            
-                            if (!whiteIcons.has(tab.id)) {
-                                checkIfWhiteIcon(tab);
-                            }
-                        });
+                            // Create sections for each browser
+                            Object.entries(browserGroups).forEach(([browser, browserTabs]) => {
+                                const browserSection = document.createElement('div');
+                                browserSection.className = 'browser-section';
+                                
+                                const browserHeader = document.createElement('div');
+                                browserHeader.className = 'browser-header';
+                                browserHeader.textContent = browser;
+                                browserSection.appendChild(browserHeader);
+                                
+                                const tabsContainer = document.createElement('div');
+                                tabsContainer.className = 'browser-tabs';
+                                
+                                browserTabs.forEach(tab => {
+                                    const tabElement = createTabElement(tab);
+                                    tabsContainer.appendChild(tabElement);
+                                });
+                                
+                                browserSection.appendChild(tabsContainer);
+                                tabList.appendChild(browserSection);
+                            });
+                        } else {
+                            // Regular tab list for specific browser view
+                            filteredTabs.forEach(tab => {
+                                const tabElement = createTabElement(tab);
+                                tabList.appendChild(tabElement);
+                            });
+                        }
                     }
+                    
+                    function createTabElement(tab) {
+                        const tabElement = document.createElement('div');
+                        tabElement.className = 'tab-item';
+                        tabElement.onclick = () => {
+                            ws.send(JSON.stringify({
+                                type: 'activate_tab',
+                                tabId: tab.id,
+                                windowId: tab.windowId
+                            }));
+                        };
+                        
+                        const isWhite = whiteIcons.get(tab.id);
+                        
+                        tabElement.innerHTML = `
+                            <img src="${tab.favIconUrl || '/static/fallback.svg'}" 
+                                 class="favicon ${isWhite ? 'recolor-black' : ''}" 
+                                 onerror="this.src='/static/fallback.svg'">
+                            <span class="tab-title">${tab.title}</span>
+                            <span class="browser-label">${tab.browser}</span>
+                        `;
+                        
+                        if (!whiteIcons.has(tab.id)) {
+                            checkIfWhiteIcon(tab);
+                        }
+                        
+                        return tabElement;
+                    }
+
+                    // Add styles for browser sections
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        .browser-section {
+                            margin-bottom: 20px;
+                        }
+                        .browser-header {
+                            font-size: 14px;
+                            color: #666;
+                            padding: 8px;
+                            background: #f5f5f5;
+                            border-radius: 4px;
+                            margin-bottom: 10px;
+                        }
+                        .browser-tabs {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                            gap: 10px;
+                        }
+                    `;
+                    document.head.appendChild(style);
 
                     ws.onopen = function() {
                         connectionStatus.textContent = 'Connected';
