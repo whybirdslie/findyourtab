@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+  "name": "FindYourTab",
+  "version": "1.0",
+  "description": "Quickly find and switch between browser tabs",
+  "permissions": [
+    "tabs",
+    "<all_urls>",
+    "ws://localhost:*/"
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "FindYourTab"
+  },
+  "background": {
+    "scripts": ["chrome-polyfill.js", "background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "findyourtab@yourdomain.com",
+      "strict_min_version": "57.0"
+    }
+  },
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+} 
