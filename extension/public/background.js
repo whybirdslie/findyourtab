@@ -100,16 +100,38 @@ async function getIconDataUrl(favIconUrl) {
     if (!favIconUrl) return null;
     
     try {
-        const response = await fetch(favIconUrl);
-        const blob = await response.blob();
+        // For extension URLs or data URLs, use them directly
+        if (favIconUrl.startsWith('chrome-extension://') || 
+            favIconUrl.startsWith('moz-extension://') || 
+            favIconUrl.startsWith('edge-extension://') ||
+            favIconUrl.startsWith('data:')) {
+            return favIconUrl;
+        }
+
+        // Try to fetch with no-cors mode
+        const response = await fetch(favIconUrl, {
+            mode: 'no-cors',
+            cache: 'force-cache',
+            credentials: 'omit'
+        }).catch(() => null);  // Silently catch fetch errors
+
+        // If fetch fails or response is not ok, return original URL
+        if (!response) return favIconUrl;
+
+        // Try to convert to blob
+        const blob = await response.blob().catch(() => null);
+        if (!blob) return favIconUrl;
+
+        // Convert blob to data URL
         return new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
+            reader.onloadend = () => resolve(reader.result || favIconUrl);
+            reader.onerror = () => resolve(favIconUrl);  // On error, use original URL
             reader.readAsDataURL(blob);
         });
     } catch (error) {
-        console.log('Error converting icon to data URL:', error);
-        return null;
+        // Silently handle any errors and return original URL
+        return favIconUrl;
     }
 }
 
@@ -119,14 +141,13 @@ async function sendCurrentTabs() {
     try {
         const tabs = await chrome.tabs.query({});
         const currentBrowser = await detectCurrentBrowser();
-        console.log('Detected browser:', currentBrowser);
         
-        // Get icon data URLs
+        // Process tabs without logging errors
         const formattedTabs = await Promise.all(tabs.map(async tab => ({
             id: tab.id,
             title: tab.title,
             url: tab.url,
-            favIconUrl: await getIconDataUrl(tab.favIconUrl) || tab.favIconUrl,
+            favIconUrl: tab.favIconUrl,  // Use original URL directly
             windowId: tab.windowId,
             browser: currentBrowser
         })));
@@ -137,7 +158,10 @@ async function sendCurrentTabs() {
             browser: currentBrowser
         }));
     } catch (error) {
-        console.error('Error sending tabs:', error);
+        // Only log critical errors
+        if (error.message !== 'Failed to fetch') {
+            console.error('Error sending tabs:', error);
+        }
     }
 }
 

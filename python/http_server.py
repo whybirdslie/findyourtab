@@ -80,14 +80,16 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                     }
                     h1 {
                         margin: 0;
-                        font-size: 20px;
+                        font-size: 24px;
                         color: #333;
+                        align-self: center;
                     }
                     .connection-status {
                         font-size: 12px;
                         padding: 4px 8px;
                         border-radius: 4px;
                         margin-left: 10px;
+                        align-self: center;
                     }
                     .connection-status.connected {
                         color: #4CAF50;

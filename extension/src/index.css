@@ -21,10 +21,6 @@ body {
   align-items: center;
 }
 
-h1 {
-  color: #333;
-}
-
 button {
   background-color: #4CAF50;
   border: none;
@@ -120,17 +116,23 @@ button {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  object-fit: contain;
+  transition: none;
 }
 
-.favicon.potentially-white {
-  filter: brightness(0) saturate(100%) invert(20%) sepia(10%) saturate(2076%) hue-rotate(86deg) brightness(118%) contrast(10%);
+.favicon.recolor-black {
+  filter: invert(100%) brightness(0) !important;
+  -webkit-filter: invert(1) brightness(0) !important;
+  opacity: 0.8 !important;
 }
 
 h1 {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  font-size: 24px;
   color: #333;
   text-align: left;
+  align-self: center;
 }
 
 .tab-item span {
@@ -155,32 +157,15 @@ h1 {
 .header-container {
   display: flex;
   align-items: baseline;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .header-left {
   display: flex;
   align-items: baseline;
   gap: 15px;
-}
-
-.connection-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
-}
-
-.connection-button:not(.connected) {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.connection-button.connected {
-  background-color: #f44336;
-  color: white;
 }
 
 .connection-button:hover {
@@ -192,7 +177,7 @@ h1 {
   padding: 4px 8px;
   border-radius: 4px;
   position: relative;
-  top: 1px;
+  align-self: center;
 }
 
 .connection-status.connected {
@@ -203,4 +188,38 @@ h1 {
 .connection-status.offline {
   color: #666;
   background-color: #f0f0f0;
+}
+
+.search-container {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 10px 0;
+  margin-bottom: 15px;
+  z-index: 1000;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #4CAF50;
+}
+
+.highlight {
+  background-color: #fff3cd;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+.tab-item.hidden {
+  display: none;
 }
