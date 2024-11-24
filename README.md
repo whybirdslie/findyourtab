@@ -1,22 +1,23 @@
-FindYourTab - Your Universal Tab Manager
+**FindYourTab - Your Universal Tab Manager**
 
-Easily find and switch between tabs across multiple browsers. Perfect for users who work with multiple browsers simultaneously.
+Easily find and switch between tabs across multiple browsers. Perfect for users who work with multiple browsers simultaneously.<br>
+<br>
 
-Features:
-• Quick tab search across all your browsers
-• Global hotkey (Ctrl+Alt+F) to show/hide
-• Real-time tab updates
-• Clean, modern interface
-• Works with Chrome, Brave, Opera, and Firefox
+**Features:**<br>
+• Quick tab search across all your browsers<br>
+• Global hotkey (Ctrl+Alt+F) to show/hide<br>
+• Real-time tab updates<br>
+• Clean, modern interface<br>
+• Works with Chrome, Brave, Opera, and Firefox<br><br>
 
-Note: Requires companion app (available at [your website/github]) for cross-browser functionality.
+**Note: Requires companion app (available at [your website/github]) for cross-browser functionality.**<br><br>
 
-Installation:
-1. Install the extension
-2. Download and run the companion app
-3. Use Ctrl+Alt+F to access your tabs
+**Installation:**<br>
+1. Install the extension<br>
+2. Download and run the companion app<br>
+3. Use Ctrl+Alt+F to access your tabs<br><br>
 
-Privacy & Security:
-• No data collection
-• Works locally on your machine
+**Privacy & Security:**<br>
+• No data collection<br>
+• Works locally on your machine<br>
 • No external servers
