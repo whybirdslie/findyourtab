@@ -1,20 +1,27 @@
 import asyncio
 import json
 import websockets
+import logging
+from websockets.exceptions import ConnectionClosed
 
 class TabWebSocketServer:
     def __init__(self):
         self.clients = set()
-        self.browser_tabs = {}  # Store tabs for each browser
+        self.browser_tabs = {}
+        # Configure logging
+        logging.basicConfig(level=logging.WARNING)
+        self.logger = logging.getLogger('WebSocketServer')
+        # Suppress websockets server logger
+        logging.getLogger('websockets.server').setLevel(logging.ERROR)
 
     async def register(self, websocket):
         self.clients.add(websocket)
-        print(f"Client connected. Total clients: {len(self.clients)}")
+        self.logger.info(f"Client connected. Total clients: {len(self.clients)}")
         await self.send_all_tabs(websocket)
 
     async def unregister(self, websocket):
         self.clients.remove(websocket)
-        print(f"Client disconnected. Total clients: {len(self.clients)}")
+        self.logger.info(f"Client disconnected. Total clients: {len(self.clients)}")
 
     async def send_all_tabs(self, websocket):
         if self.browser_tabs:
@@ -103,18 +110,40 @@ class TabWebSocketServer:
                     except websockets.ConnectionClosed:
                         pass
 
-
     async def handler(self, websocket):
-        await self.register(websocket)
         try:
+            await self.register(websocket)
             async for message in websocket:
-                await self.handle_message(websocket, message)
-        except websockets.ConnectionClosed:
-            pass
+                try:
+                    await self.handle_message(websocket, message)
+                except Exception as e:
+                    self.logger.debug(f"Error handling message: {e}")
+        except ConnectionClosed:
+            pass  # Silently handle normal connection closes
+        except EOFError:
+            pass  # Silently handle EOF errors during handshake
+        except Exception as e:
+            if "connection closed while reading HTTP request line" not in str(e):
+                self.logger.warning(f"Unexpected error in handler: {e}")
         finally:
-            await self.unregister(websocket)
+            try:
+                await self.unregister(websocket)
+            except Exception:
+                pass
 
     async def start_server(self, host="localhost", port=8765):
-        async with websockets.serve(self.handler, host, port):
-            print(f"WebSocket server started at ws://{host}:{port}")
-            await asyncio.Future()  # run forever
+        while True:  # Keep trying to start the server
+            try:
+                async with websockets.serve(
+                    self.handler, 
+                    host, 
+                    port, 
+                    ping_interval=None,
+                    ping_timeout=None,
+                    logger=None  # Disable internal websockets logger
+                ) as server:
+                    self.logger.info(f"WebSocket server started at ws://{host}:{port}")
+                    await asyncio.Future()  # run forever
+            except Exception as e:
+                self.logger.error(f"Server error, restarting: {e}")
+                await asyncio.sleep(1)  # Wait before retrying
