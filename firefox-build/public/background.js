@@ -2,9 +2,8 @@ console.log('Background script loaded');
 
 let ws = null;
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = Infinity;
+const MAX_RECONNECT_ATTEMPTS = 5;
 let updateTimeout = null;
-let reconnectInterval = null;
 
 function connectWebSocket() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
@@ -15,8 +14,6 @@ function connectWebSocket() {
   ws.onopen = () => {
     console.log('Connected to WebSocket server');
     reconnectAttempts = 0;
-    clearInterval(reconnectInterval);
-    reconnectInterval = null;
     sendCurrentTabs();
   };
 
@@ -26,12 +23,9 @@ function connectWebSocket() {
 
   ws.onclose = () => {
     console.log('WebSocket connection closed');
-    if (!reconnectInterval) {
-      reconnectInterval = setInterval(() => {
-        reconnectAttempts++;
-        console.log(`Reconnection attempt ${reconnectAttempts}`);
-        connectWebSocket();
-      }, 2000);
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      reconnectAttempts++;
+      setTimeout(connectWebSocket, 1000 * reconnectAttempts);
     }
   };
 
@@ -96,49 +90,31 @@ async function detectCurrentBrowser() {
   }
 }
 
-async function getIconDataUrl(favIconUrl) {
-    if (!favIconUrl) return null;
-    
-    try {
-        const response = await fetch(favIconUrl);
-        const blob = await response.blob();
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-        });
-    } catch (error) {
-        console.log('Error converting icon to data URL:', error);
-        return null;
-    }
-}
-
 async function sendCurrentTabs() {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    try {
-        const tabs = await chrome.tabs.query({});
-        const currentBrowser = await detectCurrentBrowser();
-        console.log('Detected browser:', currentBrowser);
-        
-        // Get icon data URLs
-        const formattedTabs = await Promise.all(tabs.map(async tab => ({
-            id: tab.id,
-            title: tab.title,
-            url: tab.url,
-            favIconUrl: await getIconDataUrl(tab.favIconUrl) || tab.favIconUrl,
-            windowId: tab.windowId,
-            browser: currentBrowser
-        })));
+  try {
+    const tabs = await chrome.tabs.query({});
+    const currentBrowser = await detectCurrentBrowser();
+    console.log('Detected browser:', currentBrowser); // Debug log
+    
+    const formattedTabs = tabs.map(tab => ({
+      id: tab.id,
+      title: tab.title,
+      url: tab.url,
+      favIconUrl: tab.favIconUrl,
+      windowId: tab.windowId,
+      browser: currentBrowser
+    }));
 
-        ws.send(JSON.stringify({
-            type: 'tabs_update',
-            tabs: formattedTabs,
-            browser: currentBrowser
-        }));
-    } catch (error) {
-        console.error('Error sending tabs:', error);
-    }
+    ws.send(JSON.stringify({
+      type: 'tabs_update',
+      tabs: formattedTabs,
+      browser: currentBrowser
+    }));
+  } catch (error) {
+    console.error('Error sending tabs:', error);
+  }
 }
 
 function debouncedSendTabs() {
@@ -151,12 +127,8 @@ function debouncedSendTabs() {
 // Connect to WebSocket server
 connectWebSocket();
 
-// Update tabs every 10 seconds if connected
-setInterval(() => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    debouncedSendTabs();
-  }
-}, 10000);
+// Update tabs every 10 seconds
+setInterval(debouncedSendTabs, 10000);
 
 // Listen for tab changes
 chrome.tabs.onCreated.addListener(debouncedSendTabs);

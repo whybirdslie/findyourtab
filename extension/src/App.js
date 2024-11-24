@@ -14,7 +14,21 @@ function App() {
   const detectBrowser = (url) => {
     if (url.includes('chrome-extension://')) return 'Chrome';
     if (url.includes('brave-extension://')) return 'Brave';
-    return window.navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Brave';
+    if (url.includes('opera-extension://')) {
+      // Check for Opera GX specific features
+      if (window.navigator.userAgent.includes('GX')) {
+        return 'Opera GX';
+      }
+      return 'Opera';
+    }
+    
+    // Fallback detection based on user agent
+    const userAgent = window.navigator.userAgent;
+    if (userAgent.includes('OPR/')) {
+      return userAgent.includes('GX') ? 'Opera GX' : 'Opera';
+    }
+    
+    return window.navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Unknown';
   };
 
   const getCurrentBrowser = () => {

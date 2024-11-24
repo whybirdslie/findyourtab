@@ -1,10 +1,36 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
 import os
+import urllib.parse
+import urllib.request
 
 class ExtensionHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/popup.html':
+        if self.path.startswith('/proxy-favicon?url='):
+            try:
+                # Extract the original favicon URL
+                favicon_url = self.path.split('url=')[1]
+                favicon_url = urllib.parse.unquote(favicon_url)
+                
+                # Create headers with a fake user agent
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                
+                # Make the request to get the favicon
+                req = urllib.request.Request(favicon_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    self.send_response(200)
+                    self.send_header('Content-type', response.headers.get('Content-type', 'image/x-icon'))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(response.read())
+                    
+            except Exception as e:
+                print(f"Error proxying favicon: {e}")
+                self.send_error(404)
+                
+        elif self.path == '/popup.html':
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -29,11 +55,12 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         -webkit-app-region: no-drag;
                     }
                     #container {
-                        max-width: 800px;
+                        max-width: 100%;
                         margin: 0 auto;
                         height: calc(100vh - 40px);
                         overflow-y: auto;
                         -webkit-app-region: no-drag;
+                        padding-right: 8px;
                     }
                     .header-container {
                         display: flex;
@@ -119,6 +146,8 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         width: 16px;
                         height: 16px;
                         flex-shrink: 0;
+                        object-fit: contain;
+                        transition: none;
                     }
                     .favicon.recolor-black {
                         filter: brightness(0) saturate(100%);
@@ -147,6 +176,65 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         padding-bottom: 5px;
                         border-bottom: 1px solid #eee;
                     }
+                    .search-container {
+                        position: sticky;
+                        top: 0;
+                        background: white;
+                        padding: 10px 0;
+                        margin-bottom: 15px;
+                        z-index: 1000;
+                        width: 100%;
+                        min-width: 200px;
+                        margin-left: 0;
+                        margin-right: auto;
+                    }
+                    
+                    .search-input {
+                        width: 100%;
+                        padding: 8px 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        outline: none;
+                        transition: border-color 0.2s;
+                        box-sizing: border-box;
+                    }
+                    
+                    .search-input:focus {
+                        border-color: #4CAF50;
+                    }
+                    
+                    .tab-item.hidden {
+                        display: none;
+                    }
+                    
+                    .highlight {
+                        background-color: #fff3cd;
+                        padding: 2px;
+                        border-radius: 2px;
+                    }
+                    /* Style the scrollbar track */
+                    #container::-webkit-scrollbar {
+                        width: 8px;  // Width of the scrollbar
+                    }
+
+                    /* Style the scrollbar thumb */
+                    #container::-webkit-scrollbar-thumb {
+                        background: #c1c1c1;
+                        border-radius: 4px;
+                    }
+
+                    /* Style the scrollbar track on hover */
+                    #container::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                    }
+
+                    /* When scrollbar is present, adjust the padding */
+                    @media (overflow-y: scroll) {
+                        #container {
+                            padding-right: 16px;  // More padding when scrollbar appears
+                        }
+                    }
                 </style>
             </head>
             <body>
@@ -159,6 +247,15 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="search-container">
+                        <input type="text" 
+                               class="search-input" 
+                               id="searchInput" 
+                               placeholder="Search tabs..."
+                               autofocus>
+                    </div>
+                    
                     <div class="browser-filters" id="browserFilters">
                         <button class="browser-filter active" data-browser="all">All Browsers</button>
                     </div>
@@ -250,19 +347,21 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                     }
 
                     function checkIfWhiteIcon(tab) {
-                        if (tab.favIconUrl) {
-                            const img = new Image();
-                            img.crossOrigin = 'anonymous';
-                            img.onload = () => {
-                                const isWhite = isIconWhite(img);
-                                whiteIcons.set(tab.id, isWhite);
-                                updateTabList(allTabs); // Refresh the display
-                            };
-                            img.onerror = () => {
-                                whiteIcons.set(tab.id, false);
-                            };
-                            img.src = tab.favIconUrl;
-                        }
+                        if (!tab.favIconUrl) return;
+                        
+                        // Create a proxy URL for the favicon through our server
+                        const proxyUrl = `/proxy-favicon?url=${encodeURIComponent(tab.favIconUrl)}`;
+                        
+                        const img = new Image();
+                        img.onload = () => {
+                            const isWhite = isIconWhite(img);
+                            whiteIcons.set(tab.id, isWhite);
+                            updateTabList(allTabs);
+                        };
+                        img.onerror = () => {
+                            whiteIcons.set(tab.id, false);
+                        };
+                        img.src = proxyUrl;
                     }
 
                     function updateTabList(tabs) {
@@ -339,19 +438,40 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                             }));
                         };
                         
-                        const isWhite = whiteIcons.get(tab.id);
+                        // Create image element with explicit size
+                        const imgElement = document.createElement('img');
+                        imgElement.width = 16;  // Set explicit width
+                        imgElement.height = 16; // Set explicit height
+                        imgElement.src = tab.favIconUrl || '/static/fallback.svg';
+                        imgElement.className = 'favicon';
                         
-                        tabElement.innerHTML = `
-                            <img src="${tab.favIconUrl || '/static/fallback.svg'}" 
-                                 class="favicon ${isWhite ? 'recolor-black' : ''}" 
-                                 onerror="this.src='/static/fallback.svg'">
-                            <span class="tab-title">${tab.title}</span>
-                            <span class="browser-label">${tab.browser}</span>
-                        `;
-                        
-                        if (!whiteIcons.has(tab.id)) {
-                            checkIfWhiteIcon(tab);
+                        // If it's a data URL, analyze it without affecting display
+                        if (tab.favIconUrl && tab.favIconUrl.startsWith('data:')) {
+                            const testImg = new Image();
+                            testImg.onload = () => {
+                                const isWhite = isIconWhite(testImg);
+                                if (isWhite) {
+                                    imgElement.classList.add('recolor-black');
+                                }
+                            };
+                            testImg.src = tab.favIconUrl;
                         }
+                        
+                        imgElement.onerror = function() {
+                            this.src = '/static/fallback.svg';
+                        };
+                        
+                        const titleSpan = document.createElement('span');
+                        titleSpan.className = 'tab-title';
+                        titleSpan.textContent = tab.title;
+                        
+                        const browserLabel = document.createElement('span');
+                        browserLabel.className = 'browser-label';
+                        browserLabel.textContent = tab.browser;
+                        
+                        tabElement.appendChild(imgElement);
+                        tabElement.appendChild(titleSpan);
+                        tabElement.appendChild(browserLabel);
                         
                         return tabElement;
                     }
@@ -401,6 +521,49 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                             ws = new WebSocket('ws://localhost:8765');
                         }, 1000);
                     };
+
+                    const searchInput = document.getElementById('searchInput');
+                    
+                    function highlightText(text, searchTerm) {
+                        if (!searchTerm) return text;
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        return text.replace(regex, '<span class="highlight">$1</span>');
+                    }
+                    
+                    function filterTabs() {
+                        const searchTerm = searchInput.value.toLowerCase();
+                        const tabElements = document.querySelectorAll('.tab-item');
+                        
+                        tabElements.forEach(tabElement => {
+                            const title = tabElement.querySelector('.tab-title').textContent.toLowerCase();
+                            const matches = title.includes(searchTerm);
+                            
+                            if (matches) {
+                                tabElement.classList.remove('hidden');
+                                // Highlight matching text
+                                const titleElement = tabElement.querySelector('.tab-title');
+                                titleElement.innerHTML = highlightText(titleElement.textContent, searchTerm);
+                            } else {
+                                tabElement.classList.add('hidden');
+                            }
+                        });
+                    }
+                    
+                    searchInput.addEventListener('input', filterTabs);
+                    searchInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const visibleTabs = document.querySelectorAll('.tab-item:not(.hidden)');
+                            if (visibleTabs.length > 0) {
+                                visibleTabs[0].click();
+                            }
+                        }
+                    });
+                    
+                    const originalUpdateTabList = updateTabList;
+                    updateTabList = function(tabs) {
+                        originalUpdateTabList(tabs);
+                        filterTabs();
+                    };
                 </script>
             </body>
             </html>
@@ -413,6 +576,13 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             
             with open('static/fallback.svg', 'rb') as f:
+                self.wfile.write(f.read())
+        elif self.path == '/favicon.ico':
+            self.send_response(200)
+            self.send_header('Content-type', 'image/x-icon')
+            self.end_headers()
+            
+            with open('static/favicon.ico', 'rb') as f:
                 self.wfile.write(f.read())
         else:
             self.send_error(404)

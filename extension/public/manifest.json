@@ -9,6 +9,12 @@
   ],
   "action": {
     "default_popup": "index.html",
+    "default_icon": {
+      "16": "favicon.ico",
+      "32": "favicon.ico",
+      "48": "favicon.ico",
+      "128": "favicon.ico"
+    },
     "default_title": "FindYourTab"
   },
   "background": {
@@ -18,5 +24,11 @@
   "host_permissions": [
     "<all_urls>",
     "ws://localhost:*/"
-  ]
+  ],
+  "icons": {
+    "16": "favicon.ico",
+    "32": "favicon.ico",
+    "48": "favicon.ico",
+    "128": "favicon.ico"
+  }
 }
