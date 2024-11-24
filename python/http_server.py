@@ -29,11 +29,12 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         -webkit-app-region: no-drag;
                     }
                     #container {
-                        max-width: 800px;
+                        max-width: 100%;
                         margin: 0 auto;
                         height: calc(100vh - 40px);
                         overflow-y: auto;
                         -webkit-app-region: no-drag;
+                        padding-right: 8px;
                     }
                     .header-container {
                         display: flex;
@@ -147,6 +148,65 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         padding-bottom: 5px;
                         border-bottom: 1px solid #eee;
                     }
+                    .search-container {
+                        position: sticky;
+                        top: 0;
+                        background: white;
+                        padding: 10px 0;
+                        margin-bottom: 15px;
+                        z-index: 1000;
+                        width: 100%;
+                        min-width: 200px;
+                        margin-left: 0;
+                        margin-right: auto;
+                    }
+                    
+                    .search-input {
+                        width: 100%;
+                        padding: 8px 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        outline: none;
+                        transition: border-color 0.2s;
+                        box-sizing: border-box;
+                    }
+                    
+                    .search-input:focus {
+                        border-color: #4CAF50;
+                    }
+                    
+                    .tab-item.hidden {
+                        display: none;
+                    }
+                    
+                    .highlight {
+                        background-color: #fff3cd;
+                        padding: 2px;
+                        border-radius: 2px;
+                    }
+                    /* Style the scrollbar track */
+                    #container::-webkit-scrollbar {
+                        width: 8px;  // Width of the scrollbar
+                    }
+
+                    /* Style the scrollbar thumb */
+                    #container::-webkit-scrollbar-thumb {
+                        background: #c1c1c1;
+                        border-radius: 4px;
+                    }
+
+                    /* Style the scrollbar track on hover */
+                    #container::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                    }
+
+                    /* When scrollbar is present, adjust the padding */
+                    @media (overflow-y: scroll) {
+                        #container {
+                            padding-right: 16px;  // More padding when scrollbar appears
+                        }
+                    }
                 </style>
             </head>
             <body>
@@ -159,6 +219,15 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="search-container">
+                        <input type="text" 
+                               class="search-input" 
+                               id="searchInput" 
+                               placeholder="Search tabs..."
+                               autofocus>
+                    </div>
+                    
                     <div class="browser-filters" id="browserFilters">
                         <button class="browser-filter active" data-browser="all">All Browsers</button>
                     </div>
@@ -400,6 +469,49 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         setTimeout(() => {
                             ws = new WebSocket('ws://localhost:8765');
                         }, 1000);
+                    };
+
+                    const searchInput = document.getElementById('searchInput');
+                    
+                    function highlightText(text, searchTerm) {
+                        if (!searchTerm) return text;
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        return text.replace(regex, '<span class="highlight">$1</span>');
+                    }
+                    
+                    function filterTabs() {
+                        const searchTerm = searchInput.value.toLowerCase();
+                        const tabElements = document.querySelectorAll('.tab-item');
+                        
+                        tabElements.forEach(tabElement => {
+                            const title = tabElement.querySelector('.tab-title').textContent.toLowerCase();
+                            const matches = title.includes(searchTerm);
+                            
+                            if (matches) {
+                                tabElement.classList.remove('hidden');
+                                // Highlight matching text
+                                const titleElement = tabElement.querySelector('.tab-title');
+                                titleElement.innerHTML = highlightText(titleElement.textContent, searchTerm);
+                            } else {
+                                tabElement.classList.add('hidden');
+                            }
+                        });
+                    }
+                    
+                    searchInput.addEventListener('input', filterTabs);
+                    searchInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const visibleTabs = document.querySelectorAll('.tab-item:not(.hidden)');
+                            if (visibleTabs.length > 0) {
+                                visibleTabs[0].click();
+                            }
+                        }
+                    });
+                    
+                    const originalUpdateTabList = updateTabList;
+                    updateTabList = function(tabs) {
+                        originalUpdateTabList(tabs);
+                        filterTabs();
                     };
                 </script>
             </body>
