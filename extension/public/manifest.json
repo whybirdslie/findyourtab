@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "FindYourTab",
   "version": "1.0",
-  "description": "Quickly find and switch between browser tabs",
+  "description": "Quickly find and switch between browser tabs across multiple browsers",
   "permissions": [
     "tabs",
     "scripting"
@@ -22,7 +22,6 @@
     "type": "module"
   },
   "host_permissions": [
-    "<all_urls>",
     "ws://localhost:*/"
   ],
   "icons": {

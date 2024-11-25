@@ -10,7 +10,7 @@ Easily find and switch between tabs across multiple browsers. Perfect for users 
 • Clean, modern interface<br>
 • Works with Chrome, Brave, Opera, and Firefox<br><br>
 
-**Note: Requires companion app (available at [your website/github]) for cross-browser functionality.**<br><br>
+**Note: Requires companion app (available at https://whybirdslie.github.io/findyourtab) for cross-browser functionality.**<br><br>
 
 **Installation:**<br>
 1. Install the extension<br>

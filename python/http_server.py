@@ -3,14 +3,28 @@ import threading
 import os
 import urllib.parse
 import urllib.request
+import base64
+from pathlib import Path
 
 class ExtensionHandler(SimpleHTTPRequestHandler):
+    favicon_cache = {}
+    
     def do_GET(self):
         if self.path.startswith('/proxy-favicon?url='):
             try:
                 # Extract the original favicon URL
                 favicon_url = self.path.split('url=')[1]
                 favicon_url = urllib.parse.unquote(favicon_url)
+                
+                # Check cache first
+                if favicon_url in self.favicon_cache:
+                    cached_data = self.favicon_cache[favicon_url]
+                    self.send_response(200)
+                    self.send_header('Content-type', cached_data['content_type'])
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(base64.b64decode(cached_data['data']))
+                    return
                 
                 # Create headers with a fake user agent
                 headers = {
@@ -20,11 +34,21 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                 # Make the request to get the favicon
                 req = urllib.request.Request(favicon_url, headers=headers)
                 with urllib.request.urlopen(req, timeout=5) as response:
+                    content_type = response.headers.get('Content-type', 'image/x-icon')
+                    icon_data = response.read()
+                    
+                    # Cache the favicon
+                    self.favicon_cache[favicon_url] = {
+                        'content_type': content_type,
+                        'data': base64.b64encode(icon_data).decode('utf-8')
+                    }
+                    
+                    # Send response
                     self.send_response(200)
-                    self.send_header('Content-type', response.headers.get('Content-type', 'image/x-icon'))
+                    self.send_header('Content-type', content_type)
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
-                    self.wfile.write(response.read())
+                    self.wfile.write(icon_data)
                     
             except Exception as e:
                 print(f"Error proxying favicon: {e}")
@@ -80,14 +104,16 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                     }
                     h1 {
                         margin: 0;
-                        font-size: 20px;
+                        font-size: 24px;
                         color: #333;
+                        align-self: center;
                     }
                     .connection-status {
                         font-size: 12px;
                         padding: 4px 8px;
                         border-radius: 4px;
                         margin-left: 10px;
+                        align-self: center;
                     }
                     .connection-status.connected {
                         color: #4CAF50;
@@ -314,6 +340,9 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                     }
 
                     function isIconWhite(img) {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
                         canvas.width = img.width;
                         canvas.height = img.height;
                         
@@ -333,7 +362,7 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                                 
                                 if (a > 0) {
                                     totalPixels++;
-                                    if (r > 240 && g > 240 && b > 240) {
+                                    if (r > 245 && g > 245 && b > 245) {
                                         whitePixels++;
                                     }
                                 }
@@ -343,6 +372,8 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         } catch (error) {
                             console.log('Error analyzing icon:', error);
                             return false;
+                        } finally {
+                            canvas.remove();
                         }
                     }
 
@@ -440,13 +471,15 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                         
                         // Create image element with explicit size
                         const imgElement = document.createElement('img');
-                        imgElement.width = 16;  // Set explicit width
-                        imgElement.height = 16; // Set explicit height
-                        imgElement.src = tab.favIconUrl || '/static/fallback.svg';
-                        imgElement.className = 'favicon';
+                        imgElement.width = 16;
+                        imgElement.height = 16;
                         
-                        // If it's a data URL, analyze it without affecting display
-                        if (tab.favIconUrl && tab.favIconUrl.startsWith('data:')) {
+                        if (tab.favIconUrl) {
+                            // Use our proxy for external URLs
+                            const proxyUrl = `/proxy-favicon?url=${encodeURIComponent(tab.favIconUrl)}`;
+                            imgElement.src = proxyUrl;
+                            
+                            // Analyze the icon
                             const testImg = new Image();
                             testImg.onload = () => {
                                 const isWhite = isIconWhite(testImg);
@@ -454,9 +487,12 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
                                     imgElement.classList.add('recolor-black');
                                 }
                             };
-                            testImg.src = tab.favIconUrl;
+                            testImg.src = proxyUrl;
+                        } else {
+                            imgElement.src = '/static/fallback.svg';
                         }
                         
+                        imgElement.className = 'favicon';
                         imgElement.onerror = function() {
                             this.src = '/static/fallback.svg';
                         };

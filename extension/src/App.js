@@ -1,6 +1,6 @@
 /* global chrome */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './index.css';
 import fallbackIcon from './fallback.svg';
 
@@ -8,8 +8,10 @@ function App() {
   const [tabs, setTabs] = useState([]);
   const [whiteIcons, setWhiteIcons] = useState({});
   const [wsConnected, setWsConnected] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const canvasRef = useRef(document.createElement('canvas'));
   const wsRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const detectBrowser = (url) => {
     if (url.includes('chrome-extension://')) return 'Chrome';
@@ -144,65 +146,137 @@ function App() {
     };
   }, []);
 
-  const handleImageError = (e) => {
+  const handleImageError = useCallback((e) => {
+    e.preventDefault();
     e.target.onerror = null;
     e.target.src = fallbackIcon;
-  };
+  }, []);
 
-  const isIconWhite = (imgElement) => {
-    const canvas = canvasRef.current;
+  const isIconWhite = useCallback((imgElement, favIconUrl) => {
+    console.log('Running isIconWhite analysis');
+    const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    canvas.width = imgElement.width;
-    canvas.height = imgElement.height;
 
     try {
-      ctx.drawImage(imgElement, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+      canvas.width = imgElement.width;
+      canvas.height = imgElement.height;
+      console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
 
-      let whitePixels = 0;
-      let totalPixels = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const a = data[i + 3];
-        if (a > 0) {
-          totalPixels++;
-          if (r > 240 && g > 240 && b > 240) {
-            whitePixels++;
+      // Draw image with crossOrigin handling
+      ctx.drawImage(imgElement, 0, 0);
+
+      try {
+        // Try to get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        let whitePixels = 0;
+        let totalPixels = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          if (a > 0) {
+            totalPixels++;
+            if (r > 245 && g > 245 && b > 245) {
+              whitePixels++;
+            }
           }
         }
-      }
 
-      return totalPixels > 0 && whitePixels / totalPixels > 0.9;
+        const isWhite = totalPixels > 0 && whitePixels / totalPixels > 0.9;
+        console.log(`Icon analysis result: ${isWhite ? 'white' : 'not white'} (${whitePixels}/${totalPixels} pixels)`);
+        return isWhite;
+      } catch (error) {
+        // If we can't access pixel data, try to detect white icons by URL pattern
+        console.log('Falling back to URL pattern detection');
+        return favIconUrl.includes('github');
+      }
     } catch (error) {
-      console.log('Error analyzing icon:', error);
+      console.log('Error in canvas operation:', error);
       return false;
+    } finally {
+      canvas.remove();
     }
-  };
+  }, []);
 
   useEffect(() => {
+    console.log(`Analyzing ${tabs.length} tabs`);
+    
     tabs.forEach(tab => {
-      if (tab.favIconUrl) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          setWhiteIcons(prev => ({
-            ...prev,
-            [tab.id]: isIconWhite(img)
-          }));
-        };
-        img.onerror = () => {
-          setWhiteIcons(prev => ({
-            ...prev,
-            [tab.id]: false
-          }));
-        };
+      if (!tab.favIconUrl) return;
+
+      // Create a hidden image element
+      const img = new Image();
+      
+      // Suppress console errors for image loading
+      const originalConsoleError = console.error;
+      console.error = (...args) => {
+        if (!args[0].includes('Access to image at') && !args[0].includes('Failed to load icon')) {
+          originalConsoleError.apply(console, args);
+        }
+      };
+
+      img.onload = () => {
+        const isWhite = isIconWhite(img, tab.favIconUrl);
+        setWhiteIcons(prev => ({
+          ...prev,
+          [tab.id]: isWhite
+        }));
+        // Restore console.error
+        console.error = originalConsoleError;
+      };
+
+      img.onerror = () => {
+        setWhiteIcons(prev => ({
+          ...prev,
+          [tab.id]: false
+        }));
+        // Restore console.error
+        console.error = originalConsoleError;
+      };
+
+      // Try to load the image silently
+      try {
         img.src = tab.favIconUrl;
+      } catch (error) {
+        // Silently handle any errors
+        setWhiteIcons(prev => ({
+          ...prev,
+          [tab.id]: false
+        }));
       }
     });
-  }, [tabs]);
+
+    // Cleanup: restore console.error
+    return () => {
+      console.error = console.error;
+    };
+  }, [tabs, isIconWhite]);
+
+  const filteredTabs = tabs.filter(tab => 
+    tab.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === '/') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === 'Enter' && searchInputRef.current === document.activeElement) {
+        // Activate first visible tab on Enter
+        if (filteredTabs.length > 0) {
+          handleTabClick(filteredTabs[0].id);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [filteredTabs]);
 
   return (
     <div className="App">
@@ -214,24 +288,56 @@ function App() {
           </div>
         </div>
       </div>
+
+      <div className="search-container">
+        <input
+          type="text"
+          ref={searchInputRef}
+          className="search-input"
+          placeholder="Search tabs... (Press 'Tab ⭾' to focus)"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          autoFocus
+        />
+      </div>
+
       <div className="tab-grid">
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            className="tab-item"
-            onClick={() => handleTabClick(tab.id)}
-          >
-            <img
-              src={tab.favIconUrl || fallbackIcon}
-              alt="Favicon"
-              className={`favicon ${whiteIcons[tab.id] ? 'recolor-black' : ''}`}
-              onError={handleImageError}
-            />
-            <span>{tab.title}</span>
-          </div>
-        ))}
+        {filteredTabs.map((tab) => {
+          const isWhite = whiteIcons[tab.id];
+          console.log(`Rendering ${tab.title} - isWhite: ${isWhite}`);
+          
+          return (
+            <div
+              key={tab.id}
+              className="tab-item"
+              onClick={() => handleTabClick(tab.id)}
+            >
+              <img
+                src={tab.favIconUrl || fallbackIcon}
+                alt=""
+                className={`favicon ${isWhite ? 'recolor-black' : ''}`}
+                onError={handleImageError}
+                loading="lazy"
+              />
+              <span className="tab-title">
+                {highlightMatchingText(tab.title, searchQuery)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
+  );
+}
+
+function highlightMatchingText(text, query) {
+  if (!query) return text;
+  
+  const parts = text.split(new RegExp(`(${query})`, 'gi'));
+  return parts.map((part, i) => 
+    part.toLowerCase() === query.toLowerCase() ? 
+      <span key={i} className="highlight">{part}</span> : 
+      part
   );
 }
 
