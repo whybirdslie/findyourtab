@@ -5,43 +5,61 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = Infinity;
 let updateTimeout = null;
 let reconnectInterval = null;
+let isConnecting = false;
 
 function connectWebSocket() {
-  if (ws && ws.readyState === WebSocket.OPEN) return;
+    if (isConnecting) return;
+    if (ws && ws.readyState === WebSocket.OPEN) return;
 
-  console.log('Attempting to connect to WebSocket server...');
-  ws = new WebSocket('ws://localhost:8765');
-
-  ws.onopen = () => {
-    console.log('Connected to WebSocket server');
-    reconnectAttempts = 0;
-    clearInterval(reconnectInterval);
-    reconnectInterval = null;
-    sendCurrentTabs();
-  };
-
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-
-  ws.onclose = () => {
-    console.log('WebSocket connection closed');
-    if (!reconnectInterval) {
-      reconnectInterval = setInterval(() => {
-        reconnectAttempts++;
-        console.log(`Reconnection attempt ${reconnectAttempts}`);
-        connectWebSocket();
-      }, 2000);
+    isConnecting = true;
+    console.log('Attempting to connect to WebSocket server...');
+    
+    // Close existing connection if any
+    if (ws) {
+        try {
+            ws.close();
+        } catch (err) {
+            console.log('Error closing existing connection:', err);
+        }
     }
-  };
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'activate_tab') {
-      chrome.tabs.update(data.tabId, { active: true });
-      chrome.windows.update(data.windowId, { focused: true });
-    }
-  };
+    ws = new WebSocket('ws://localhost:8765');
+
+    ws.onopen = () => {
+        console.log('Connected to WebSocket server');
+        reconnectAttempts = 0;
+        clearInterval(reconnectInterval);
+        reconnectInterval = null;
+        isConnecting = false;
+        sendCurrentTabs(); // Send tabs immediately upon connection
+    };
+
+    ws.onerror = (error) => {
+        console.log('WebSocket error:', error);
+        isConnecting = false;
+    };
+
+    ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        isConnecting = false;
+        
+        // Start reconnection attempts immediately
+        if (!reconnectInterval) {
+            reconnectInterval = setInterval(() => {
+                reconnectAttempts++;
+                console.log(`Reconnection attempt ${reconnectAttempts}`);
+                connectWebSocket();
+            }, 1000); // Try every second instead of every 2 seconds
+        }
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'activate_tab') {
+            chrome.tabs.update(data.tabId, { active: true });
+            chrome.windows.update(data.windowId, { focused: true });
+        }
+    };
 }
 
 async function detectCurrentBrowser() {
@@ -172,18 +190,37 @@ function debouncedSendTabs() {
   updateTimeout = setTimeout(sendCurrentTabs, 1000);
 }
 
-// Connect to WebSocket server
+// Connect to WebSocket server immediately when the background script loads
 connectWebSocket();
 
-// Update tabs every 10 seconds if connected
+// Try to reconnect periodically if not connected
 setInterval(() => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    debouncedSendTabs();
-  }
-}, 10000);
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+    }
+}, 1000);
+
+// Update tabs every 5 seconds if connected (reduced from 10 seconds)
+setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        debouncedSendTabs();
+    }
+}, 5000);
 
 // Listen for tab changes
 chrome.tabs.onCreated.addListener(debouncedSendTabs);
 chrome.tabs.onRemoved.addListener(debouncedSendTabs);
 chrome.tabs.onUpdated.addListener(debouncedSendTabs);
 chrome.tabs.onMoved.addListener(debouncedSendTabs);
+
+// Add listener for extension startup
+chrome.runtime.onStartup.addListener(() => {
+    console.log('Extension starting up, connecting to WebSocket...');
+    connectWebSocket();
+});
+
+// Add listener for extension installation/update
+chrome.runtime.onInstalled.addListener(() => {
+    console.log('Extension installed/updated, connecting to WebSocket...');
+    connectWebSocket();
+});
