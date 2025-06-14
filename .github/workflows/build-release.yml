@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -30,88 +33,38 @@ jobs:
         cd python
         python build_executable.py
         
-    - name: Create release assets
-      run: |
-        # Create a release directory
-        mkdir release
-        
-        # Copy the ZIP file created by build script
-        if (Test-Path "FindYourTab-Windows.zip") {
-          Copy-Item "FindYourTab-Windows.zip" "release/"
-        }
-        
-        # Create a checksums file
-        cd release
-        if (Test-Path "FindYourTab-Windows.zip") {
-          Get-FileHash "FindYourTab-Windows.zip" -Algorithm SHA256 | Format-List | Out-File "checksums.txt"
-        }
-        
-    - name: Get version from tag
-      id: get_version
-      run: |
-        $version = $env:GITHUB_REF -replace 'refs/tags/', ''
-        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-        
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: FindYourTab ${{ steps.get_version.outputs.VERSION }}
+        name: FindYourTab ${{ github.ref_name }}
         body: |
-          ## 🚀 FindYourTab ${{ steps.get_version.outputs.VERSION }}
+          ## FindYourTab ${{ github.ref_name }}
           
-          ### 📥 Download
+          ### Download
           - **Windows**: Download `FindYourTab-Windows.zip` below
-          - **Browser Extension**: Install from [Chrome Web Store](https://chrome.google.com/webstore/detail/findyourtab/your-extension-id)
+          - **Browser Extension**: Install from Chrome Web Store
           
-          ### 🆕 What's New
+          ### What's New
           - Cross-browser tab management
           - Lightning-fast tab switching with Ctrl+Alt+F
           - Modern, beautiful interface
           - Privacy-focused local operation
           
-          ### 🛠️ Installation
+          ### Installation
           1. Download `FindYourTab-Windows.zip`
           2. Extract to a folder of your choice
           3. Run `FindYourTab.exe`
           4. Install the browser extension
           5. Press `Ctrl+Alt+F` to start using!
           
-          ### 📋 System Requirements
+          ### System Requirements
           - Windows 10/11
           - 4GB RAM minimum
           - Chrome, Firefox, Edge, Opera, or Brave
           
-          ### 🔒 Security
+          ### Security
           All files are scanned and safe. If Windows Defender shows a warning, click "More info" → "Run anyway".
-          
-          ---
-          
-          **Full changelog**: https://github.com/whybirdslie/findyourtab/compare/v1.0.0...${{ steps.get_version.outputs.VERSION }}
+        files: |
+          FindYourTab-Windows.zip
         draft: false
-        prerelease: false
-        
-    - name: Upload Windows ZIP
-      if: success()
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./release/FindYourTab-Windows.zip
-        asset_name: FindYourTab-Windows.zip
-        asset_content_type: application/zip
-        
-    - name: Upload Checksums
-      if: success()
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./release/checksums.txt
-        asset_name: checksums.txt
-        asset_content_type: text/plain 
+        prerelease: false 
