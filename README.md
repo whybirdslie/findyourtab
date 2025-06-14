@@ -18,8 +18,8 @@
 
 ## 🚀 Quick Start
 
-1. **[Download FindYourTab.exe](https://github.com/yourusername/findyourtab/releases/latest)**
-2. **[Install Browser Extension](https://chrome.google.com/webstore/detail/findyourtab/your-extension-id)**
+1. **[Download FindYourTab.exe](https://github.com/whybirdslie/findyourtab/releases/latest)**
+2. **[Install Browser Extension](https://chrome.google.com/webstore/detail/findyourtab/dlmfdpfdccbhhmidilgilnibkddjboda)**
 3. **Press `Ctrl+Alt+F`** to open the tab finder
 4. **Click any tab** to switch to it instantly!
 
@@ -35,7 +35,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/findyourtab.git
+git clone https://github.com/whybirdslie/findyourtab.git
 cd findyourtab
 
 # Install Python dependencies
@@ -67,8 +67,8 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🐛 Issues & Support
 
-- **Bug Reports**: [GitHub Issues](https://github.com/yourusername/findyourtab/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/yourusername/findyourtab/discussions)
+- **Bug Reports**: [GitHub Issues](https://github.com/whybirdslie/findyourtab/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/whybirdslie/findyourtab/discussions)
 
 ## 🌟 Show Your Support
 
