@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './index.css';
-import fallbackIcon from './fallback.svg';
+// Use direct path to fallback icon in public directory
+const fallbackIcon = '/fallback.svg';
 
 function App() {
   const [tabs, setTabs] = useState([]);
@@ -192,8 +193,27 @@ function App() {
         return isWhite;
       } catch (error) {
         // If we can't access pixel data, try to detect white icons by URL pattern
-        console.log('Falling back to URL pattern detection');
-        return favIconUrl.includes('github');
+        console.log('Falling back to URL pattern detection for:', favIconUrl);
+        
+        // Common patterns for white/light icons
+        const whiteIconPatterns = [
+          'github',
+          'personio',
+          'slack',
+          'discord',
+          'notion',
+          'figma',
+          'linear',
+          'vercel',
+          'netlify'
+        ];
+        
+        const isLikelyWhite = whiteIconPatterns.some(pattern => 
+          favIconUrl.toLowerCase().includes(pattern)
+        );
+        
+        console.log(`Pattern detection result: ${isLikelyWhite ? 'white' : 'not white'}`);
+        return isLikelyWhite;
       }
     } catch (error) {
       console.log('Error in canvas operation:', error);
@@ -260,6 +280,26 @@ function App() {
   const filteredTabs = tabs.filter(tab => 
     tab.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Dynamic height calculation
+  useEffect(() => {
+    const headerHeight = 120; // Header + search container
+    const tabHeight = 44; // Each tab item height including gap
+    const padding = 30; // App padding
+    const minHeight = 200;
+    const maxHeight = 600;
+    
+    // Calculate rows needed for 2-column layout
+    const rows = Math.ceil(filteredTabs.length / 2);
+    
+    const calculatedHeight = Math.min(
+      Math.max(headerHeight + (rows * tabHeight) + padding, minHeight),
+      maxHeight
+    );
+    
+    // Set the body height dynamically
+    document.body.style.height = `${calculatedHeight}px`;
+  }, [filteredTabs.length]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
