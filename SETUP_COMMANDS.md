@@ -66,8 +66,8 @@ git push
 
 ## **STEP 7: Test Everything**
 
-1. **Check your website**: `https://YOURUSERNAME.github.io/findyourtab/`
-2. **Check the release**: `https://github.com/YOURUSERNAME/findyourtab/releases`
+1. **Check your website**: `https://whybirdslie.github.io/findyourtab/`
+2. **Check the release**: `https://github.com/whybirdslie/findyourtab/releases`
 3. **Download and test the executable**
 4. **Test the browser extension**
 

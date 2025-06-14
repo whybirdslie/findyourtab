@@ -4,6 +4,7 @@ node_modules/
 # Build outputs
 dist/
 build/
+venv/
 
 # Logs
 *.log
@@ -71,3 +72,14 @@ out/
 
 findyourtab-electron/node_modules/
 *.exe
+
+# Markdown files
+*.md
+
+# Firefox build
+firefox-build/
+
+# Chrome build
+chrome-build/
+
+# Edge build

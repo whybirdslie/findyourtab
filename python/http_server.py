@@ -1,6 +1,7 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
 import os
+import sys
 import urllib.parse
 import urllib.request
 import base64
@@ -8,6 +9,20 @@ from pathlib import Path
 
 class ExtensionHandler(SimpleHTTPRequestHandler):
     favicon_cache = {}
+    
+    def get_static_file_path(self, filename):
+        """Get the correct path for static files in both development and executable environments"""
+        import sys
+        import os
+        
+        if getattr(sys, 'frozen', False):
+            # Running as executable - PyInstaller bundles files in sys._MEIPASS
+            base_path = sys._MEIPASS
+        else:
+            # Running as script - use current directory
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        return os.path.join(base_path, 'static', filename)
     
     def do_GET(self):
         if self.path.startswith('/proxy-favicon?url='):
@@ -611,21 +626,27 @@ class ExtensionHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-type', 'image/svg+xml')
             self.end_headers()
             
-            with open('static/fallback.svg', 'rb') as f:
+            # Get the correct path for both development and executable
+            fallback_path = self.get_static_file_path('fallback.svg')
+            with open(fallback_path, 'rb') as f:
                 self.wfile.write(f.read())
         elif self.path == '/favicon.ico':
             self.send_response(200)
             self.send_header('Content-type', 'image/x-icon')
             self.end_headers()
             
-            with open('static/favicon.ico', 'rb') as f:
+            # Get the correct path for both development and executable
+            favicon_path = self.get_static_file_path('favicon.ico')
+            with open(favicon_path, 'rb') as f:
                 self.wfile.write(f.read())
         else:
             self.send_error(404)
 
 def start_http_server():
-    # Ensure static directory exists
-    os.makedirs('static', exist_ok=True)
+    # Ensure static directory exists (for development mode)
+    if not getattr(sys, 'frozen', False):
+        os.makedirs('static', exist_ok=True)
+    
     server = HTTPServer(('localhost', 8000), ExtensionHandler)
     server.serve_forever()
 
