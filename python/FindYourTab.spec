@@ -10,6 +10,7 @@ a = Analysis(
         ('static', 'static'),
     ],
     hiddenimports=[
+        'pywebview',
         'webview',
         'websockets',
         'psutil',
@@ -18,7 +19,8 @@ a = Analysis(
         'json',
         'threading',
         'ctypes',
-        'logging'
+        'logging',
+        'asyncio_mqtt'
     ],
     hookspath=[],
     hooksconfig={},

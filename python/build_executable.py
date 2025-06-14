@@ -8,6 +8,7 @@ import sys
 import subprocess
 import shutil
 from pathlib import Path
+import datetime
 
 def install_pyinstaller():
     """Install PyInstaller if not already installed"""
@@ -34,6 +35,7 @@ a = Analysis(
         ('static', 'static'),
     ],
     hiddenimports=[
+        'pywebview',
         'webview',
         'websockets',
         'psutil',
@@ -42,7 +44,8 @@ a = Analysis(
         'json',
         'threading',
         'ctypes',
-        'logging'
+        'logging',
+        'asyncio_mqtt'
     ],
     hookspath=[],
     hooksconfig={},
@@ -136,26 +139,39 @@ def create_installer_files():
 - Check that port 8765 and 8000 are available
 
 ## Support
-Visit: https://github.com/yourusername/findyourtab
+Visit: https://github.com/whybirdslie/findyourtab
 """
     
     with open('dist/README.txt', 'w') as f:
         f.write(readme_content)
     
     # Create version info
-    version_info = """FindYourTab v1.0.0
-Built: {date}
+    version_info = f"""FindYourTab v1.0.0
+Built: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Platform: Windows x64
-Python: {python_version}
-""".format(
-        date=subprocess.check_output(['date', '/t'], shell=True, text=True).strip(),
-        python_version=sys.version.split()[0]
-    )
+Python: {sys.version.split()[0]}
+"""
     
     with open('dist/version.txt', 'w') as f:
         f.write(version_info)
     
     print("✓ Distribution files created")
+
+def create_zip_package():
+    """Create a ZIP package for distribution"""
+    if os.path.exists('dist/FindYourTab.exe'):
+        # Create ZIP file
+        zip_name = 'FindYourTab-Windows.zip'
+        shutil.make_archive('FindYourTab-Windows', 'zip', 'dist')
+        
+        # Move to parent directory for GitHub releases
+        if os.path.exists(f'../{zip_name}'):
+            os.remove(f'../{zip_name}')
+        shutil.move(f'{zip_name}', f'../{zip_name}')
+        
+        print(f"✓ ZIP package created: {zip_name}")
+        return True
+    return False
 
 def main():
     """Main build process"""
@@ -174,9 +190,12 @@ def main():
         
         if build_executable():
             create_installer_files()
+            create_zip_package()
             print("\n🎉 Build completed successfully!")
             print(f"📁 Executable location: {os.path.abspath('dist/FindYourTab.exe')}")
-            print(f"📦 File size: {os.path.getsize('dist/FindYourTab.exe') / 1024 / 1024:.1f} MB")
+            if os.path.exists('dist/FindYourTab.exe'):
+                print(f"📦 File size: {os.path.getsize('dist/FindYourTab.exe') / 1024 / 1024:.1f} MB")
+            print(f"📦 ZIP package: FindYourTab-Windows.zip")
             return True
         else:
             return False
