@@ -65,6 +65,6 @@ jobs:
           ### Security
           All files are scanned and safe. If Windows Defender shows a warning, click "More info" → "Run anyway".
         files: |
-          FindYourTab-Windows.zip
+          python/FindYourTab-Windows.zip
         draft: false
         prerelease: false 

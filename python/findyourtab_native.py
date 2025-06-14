@@ -86,7 +86,7 @@ def main():
     if tab_finder.show_window():
         # Start webview only if window creation was successful
         print("Starting webview...", file=sys.stderr)
-        webview.start(debug=True)
+        webview.start(debug=False)
     else:
         print("Failed to create window, exiting...", file=sys.stderr)
         sys.exit(1)
