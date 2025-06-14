@@ -2,8 +2,8 @@
 
 **Universal Browser Tab Manager for Windows**
 
-[![Download](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/yourusername/findyourtab/releases/latest)
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-green?style=for-the-badge&logo=googlechrome)](https://chrome.google.com/webstore/detail/findyourtab/your-extension-id)
+[![Download](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/whybirdslie/findyourtab/releases/latest)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-green?style=for-the-badge&logo=googlechrome)](https://chrome.google.com/webstore/detail/findyourtab/dlmfdpfdccbhhmidilgilnibkddjboda)
 
 > **Instantly find and switch between all your browser tabs with a single keyboard shortcut**
 
