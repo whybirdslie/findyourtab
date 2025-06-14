@@ -14,11 +14,11 @@ def install_pyinstaller():
     """Install PyInstaller if not already installed"""
     try:
         import PyInstaller
-        print("✓ PyInstaller already installed")
+        print("PyInstaller already installed")
     except ImportError:
         print("Installing PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
-        print("✓ PyInstaller installed")
+        print("PyInstaller installed")
 
 def create_spec_file():
     """Create PyInstaller spec file for better control"""
@@ -85,7 +85,7 @@ exe = EXE(
     
     with open('FindYourTab.spec', 'w') as f:
         f.write(spec_content.strip())
-    print("✓ Spec file created")
+    print("Spec file created")
 
 def build_executable():
     """Build the executable using PyInstaller"""
@@ -102,11 +102,11 @@ def build_executable():
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.returncode == 0:
-        print("✓ Executable built successfully!")
-        print(f"✓ Location: {os.path.abspath('dist/FindYourTab.exe')}")
+        print("Executable built successfully!")
+        print(f"Location: {os.path.abspath('dist/FindYourTab.exe')}")
         return True
     else:
-        print("✗ Build failed:")
+        print("Build failed:")
         print(result.stderr)
         return False
 
@@ -155,7 +155,7 @@ Python: {sys.version.split()[0]}
     with open('dist/version.txt', 'w') as f:
         f.write(version_info)
     
-    print("✓ Distribution files created")
+    print("Distribution files created")
 
 def create_zip_package():
     """Create a ZIP package for distribution"""
@@ -169,18 +169,18 @@ def create_zip_package():
             os.remove(f'../{zip_name}')
         shutil.move(f'{zip_name}', f'../{zip_name}')
         
-        print(f"✓ ZIP package created: {zip_name}")
+        print(f"ZIP package created: {zip_name}")
         return True
     return False
 
 def main():
     """Main build process"""
-    print("🚀 Building FindYourTab Executable")
+    print("Building FindYourTab Executable")
     print("=" * 40)
     
     # Check if we're in the right directory
     if not os.path.exists('findyourtab_native.py'):
-        print("✗ Error: findyourtab_native.py not found!")
+        print("Error: findyourtab_native.py not found!")
         print("Please run this script from the python/ directory")
         return False
     
@@ -191,17 +191,17 @@ def main():
         if build_executable():
             create_installer_files()
             create_zip_package()
-            print("\n🎉 Build completed successfully!")
-            print(f"📁 Executable location: {os.path.abspath('dist/FindYourTab.exe')}")
+            print("\nBuild completed successfully!")
+            print(f"Executable location: {os.path.abspath('dist/FindYourTab.exe')}")
             if os.path.exists('dist/FindYourTab.exe'):
-                print(f"📦 File size: {os.path.getsize('dist/FindYourTab.exe') / 1024 / 1024:.1f} MB")
-            print(f"📦 ZIP package: FindYourTab-Windows.zip")
+                print(f"File size: {os.path.getsize('dist/FindYourTab.exe') / 1024 / 1024:.1f} MB")
+            print(f"ZIP package: FindYourTab-Windows.zip")
             return True
         else:
             return False
             
     except Exception as e:
-        print(f"✗ Build failed with error: {e}")
+        print(f"Build failed with error: {e}")
         return False
 
 if __name__ == "__main__":
