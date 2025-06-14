@@ -1,4 +1,5 @@
-keyboard==0.13.5
-pywebview==4.4.1
-psutil==5.9.8
-websockets==12.0
+webview>=4.4.1
+websockets>=12.0
+psutil>=5.9.0
+keyboard>=0.13.5
+asyncio-mqtt>=0.13.0

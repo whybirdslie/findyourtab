@@ -5,14 +5,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f0f0;
-  /* Light gray background */
-  width: 100%;
-  min-width: 600px;
-  /* Ensure minimum width */
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 700px;
+  min-height: 200px;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .container {
@@ -21,36 +20,18 @@ body {
   align-items: center;
 }
 
-button {
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 10px 0;
-  cursor: pointer;
-}
+/* Removed unused button styles */
 
-#result {
-  margin-top: 20px;
-  border: 1px solid #ddd;
-  padding: 10px;
-  max-height: 200px;
-  overflow-y: auto;
-  width: 100%;
-}
+/* Removed unused #result styles */
 
 .App {
   text-align: left;
   font-family: Arial, sans-serif;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
+  margin: 0;
+  padding: 15px 15px 20px 15px;
   box-sizing: border-box;
-  padding: 20px;
+  min-height: fit-content;
 }
 
 .App-logo {
@@ -66,7 +47,7 @@ button {
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  min-height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -145,14 +126,13 @@ h1 {
 
 .tab-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 10px;
+  margin-bottom: 10px;
 }
 
-.favicon.recolor-black {
-  filter: brightness(0) saturate(100%);
-}
+
 
 .header-container {
   display: flex;

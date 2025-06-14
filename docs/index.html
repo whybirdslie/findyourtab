@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindYourTab - Universal Browser Tab Manager</title>
+    <meta name="description" content="Manage all your browser tabs in one place. Cross-browser tab switching with keyboard shortcuts.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007acc'%3E%3Cpath d='M3 3h18v4H3V3zm0 6h18v4H3V9zm0 6h18v4H3v-4z'/%3E%3C/svg%3E">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="FindYourTab - Universal Browser Tab Manager">
+    <meta property="og:description" content="Manage all your browser tabs in one place. Cross-browser tab switching with keyboard shortcuts.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourusername.github.io/findyourtab/">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .download-section {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .download-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .download-btn.primary {
+            background: #007acc;
+            border-color: #007acc;
+        }
+
+        .download-btn.primary:hover {
+            background: #005a9e;
+        }
+
+        .features {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        .installation {
+            background: #f8f9fa;
+            padding: 4rem 0;
+        }
+
+        .installation h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .install-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .install-step {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #007acc;
+            color: white;
+            border-radius: 50%;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .system-requirements {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .system-requirements h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .requirements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .requirement {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .download-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">🔍 FindYourTab</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#requirements">Requirements</a></li>
+                <li><a href="https://github.com/yourusername/findyourtab">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>FindYourTab</h1>
+                <p>The ultimate browser tab manager. View and switch between all your browser tabs instantly, across Chrome, Firefox, Edge, and more.</p>
+                
+                <div class="download-section">
+                    <a href="https://github.com/yourusername/findyourtab/releases/latest/download/FindYourTab.exe" class="download-btn primary">
+                        📥 Download for Windows
+                        <small style="display: block; font-size: 0.8em; opacity: 0.8;">v1.0.0 • 11.7 MB</small>
+                    </a>
+                    <a href="https://chrome.google.com/webstore/detail/findyourtab/your-extension-id" class="download-btn">
+                        🧩 Chrome Extension
+                    </a>
+                </div>
+
+                <p style="font-size: 0.9rem; opacity: 0.7;">
+                    Press <kbd style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">Ctrl+Alt+F</kbd> to open
+                </p>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2>Why Choose FindYourTab?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Lightning Fast</h3>
+                        <p>Switch between tabs in milliseconds. Optimized for performance with ultra-fast browser focusing.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h3>Cross-Browser</h3>
+                        <p>Works with Chrome, Firefox, Edge, Opera, and Brave. Manage all your browsers from one place.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⌨️</div>
+                        <h3>Keyboard Shortcuts</h3>
+                        <p>Global hotkey Ctrl+Alt+F to instantly open the tab finder. Navigate with arrow keys and Enter.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Smart Search</h3>
+                        <p>Find tabs by title, URL, or domain. Fuzzy search helps you find what you need quickly.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3>Clean Interface</h3>
+                        <p>Beautiful, modern UI with favicon support and responsive 2-column layout for easy browsing.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Privacy First</h3>
+                        <p>All data stays local. No tracking, no cloud sync, no data collection. Your tabs, your privacy.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="installation" class="installation">
+            <div class="container">
+                <h2>Quick Setup</h2>
+                <div class="install-steps">
+                    <div class="install-step">
+                        <div class="step-number">1</div>
+                        <h3>Download App</h3>
+                        <p>Download and run FindYourTab.exe. Windows may show a security warning - click "More info" then "Run anyway".</p>
+                    </div>
+                    <div class="install-step">
+                        <div class="step-number">2</div>
+                        <h3>Install Extension</h3>
+                        <p>Add the browser extension from Chrome Web Store or load the unpacked extension from the project files.</p>
+                    </div>
+                    <div class="install-step">
+                        <div class="step-number">3</div>
+                        <h3>Start Using</h3>
+                        <p>Press Ctrl+Alt+F to open the tab finder. Click any tab to switch to it instantly!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="requirements" class="system-requirements">
+            <div class="container">
+                <h2>System Requirements</h2>
+                <div class="requirements-grid">
+                    <div class="requirement">
+                        <strong>OS</strong><br>
+                        Windows 10/11
+                    </div>
+                    <div class="requirement">
+                        <strong>RAM</strong><br>
+                        4GB minimum
+                    </div>
+                    <div class="requirement">
+                        <strong>Browser</strong><br>
+                        Chrome, Firefox, Edge, Opera, Brave
+                    </div>
+                    <div class="requirement">
+                        <strong>Ports</strong><br>
+                        8765, 8000 available
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/yourusername/findyourtab">GitHub</a>
+                <a href="https://github.com/yourusername/findyourtab/issues">Report Issues</a>
+                <a href="https://github.com/yourusername/findyourtab/releases">Releases</a>
+            </div>
+            <p>&copy; 2024 FindYourTab. Open source project.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add download tracking (optional)
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Track download events if you have analytics
+                console.log('Download clicked:', this.href);
+            });
+        });
+    </script>
+</body>
+</html> 
