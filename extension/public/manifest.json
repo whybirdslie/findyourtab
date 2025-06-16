@@ -3,6 +3,8 @@
   "name": "FindYourTab",
   "version": "1.0",
   "description": "Quickly find and switch between browser tabs across multiple browsers",
+  "author": "whybirdslie",
+  "homepage_url": "https://github.com/whybirdslie/findyourtab",
   "permissions": [
     "tabs",
     "scripting"
