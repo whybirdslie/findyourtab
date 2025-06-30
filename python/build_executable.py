@@ -186,12 +186,14 @@ def create_zip_package():
         zip_name = 'FindYourTab-Windows.zip'
         shutil.make_archive('FindYourTab-Windows', 'zip', 'dist')
         
-        # Move to parent directory for GitHub releases
+        # Keep in python directory for GitHub Actions
+        # Also copy to parent directory for local releases
         if os.path.exists(f'../{zip_name}'):
             os.remove(f'../{zip_name}')
-        shutil.move(f'{zip_name}', f'../{zip_name}')
+        shutil.copy(f'{zip_name}', f'../{zip_name}')
         
         print(f"ZIP package created: {zip_name}")
+        print(f"Copied to parent directory: ../{zip_name}")
         return True
     return False
 
