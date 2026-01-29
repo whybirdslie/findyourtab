@@ -108,6 +108,7 @@ def _find_and_focus_browser_window_direct(browser_name):
             'Opera': {'classes': ['Chrome_WidgetWin_1'], 'title_contains': ['Opera']},
             'Opera GX': {'classes': ['Chrome_WidgetWin_1'], 'title_contains': ['Opera GX']},
             'Edge': {'classes': ['Chrome_WidgetWin_1'], 'title_contains': ['Microsoft Edge', 'Edge']},
+            'Perplexity': {'classes': ['Chrome_WidgetWin_1'], 'title_contains': ['Perplexity']},
         }
         
         patterns = browser_patterns.get(browser_name, {'classes': [], 'title_contains': [browser_name]})

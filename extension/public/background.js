@@ -99,6 +99,11 @@ async function detectCurrentBrowser() {
       return 'Firefox';
     }
 
+    // Check for Perplexity browser (Chromium-based)
+    if (navigator.userAgent.includes('Perplexity')) {
+      return 'Perplexity';
+    }
+
     // Check for Opera GX and Opera
     if (navigator.userAgent.includes('OPR/')) {
       return navigator.userAgent.includes('GX') ? 'Opera GX' : 'Opera';
